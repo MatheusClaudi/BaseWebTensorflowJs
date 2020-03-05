@@ -1,20 +1,16 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
-  </ion-toolbar>
-</ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+ 
+  <div id="app">
+   
+    <h3 *ngIf="!isVideoStreamReady && !initFailMessage">Initializing webcam stream ...</h3>
+    <h3 *ngIf="!isModelReady && !initFailMessage">loading model ...</h3>
+    <h3 *ngIf="initFailMessage">Failed to init stream and/or model - {{ initFailMessage }}</h3>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <div class="resultFrame">
+      <video id="vid" autoplay></video>
+      <canvas ref="canvas" :width="resultWidth" :height="resultHeight"></canvas>
+    </div>
   </div>
+  
 </ion-content>
