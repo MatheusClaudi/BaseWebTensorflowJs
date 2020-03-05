@@ -29,6 +29,8 @@ export class HomePage implements OnInit
   ngOnInit()
   { 
     this.streamPromise = this.initWebcamStream()
+    this.loadModelAndDetection()
+
   }
 
   initWebcamStream () {
@@ -82,6 +84,9 @@ export class HomePage implements OnInit
   }
 
   setResultSize () {
+
+    this.video = <HTMLVideoElement> document.getElementById("vid")
+
     // get the current browser window size
     let clientWidth = document.documentElement.clientWidth
     // set max width as 600
@@ -100,4 +105,99 @@ export class HomePage implements OnInit
   }
 
 
+
+  loadCustomModel () {
+    this.isModelReady = false
+    // load the model with loadGraphModel
+    return loadGraphModel(MODEL_URL)
+      .then((model) => {
+        this.model = model
+        this.isModelReady = true
+        console.log('model loaded: ', model)
+      })
+      .catch((error) => {
+        console.log('failed to load the model', error)
+        throw (error)
+      })
+  }
+
+  async detectObjects () {
+    if (!this.isModelReady) return
+
+    console.log("b")
+
+    const tfImg = tf.browser.fromPixels(this.video)
+    console.log("c1")
+
+    const smallImg = tf.image.resizeBilinear(tfImg, [300, 300]) // 600, 450
+    console.log("c2")
+
+    const resized = tf.cast(smallImg, 'float32')
+    console.log("c3")
+
+    const tf4d = tf.tensor4d(Array.from(resized.dataSync()), [1, 300, 300, 3]) // 600, 450
+
+    console.log("c4")
+
+    let predictions = await this.model.executeAsync({ image_tensor: tf4d }, ['detection_boxes', 'num_detections', 'detection_classes', 'detection_scores'])
+
+    console.log("c5")
+
+    this.renderPredictionBoxes(predictions[0].dataSync(), predictions[1].dataSync(), predictions[2].dataSync(), predictions[3].dataSync())
+    tfImg.dispose()
+    smallImg.dispose()
+    resized.dispose()
+    tf4d.dispose()
+    requestAnimationFrame(() => {
+      this.detectObjects()
+    })
+  }
+
+  loadModelAndDetection () {
+    this.modelPromise = this.loadCustomModel()
+    // wait for both stream and model promise finished then start detecting objects
+    Promise.all([this.streamPromise, this.modelPromise])
+      .then(() => {
+        console.log("aa")
+        this.detectObjects()
+      }).catch((error) => {
+        console.log('Failed to init stream and/or model: ')
+        this.initFailMessage = error
+      })
+  }
+
+  renderPredictionBoxes (predictionBoxes, totalPredictions, predictionClasses, predictionScores) {
+    // get the context of canvas
+    let canvas = <HTMLCanvasElement> document.getElementById("canvas")
+
+    const ctx = canvas.getContext('2d')
+    // clear the canvas
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+    // draw results
+    for (let i = 0; i < totalPredictions[0]; i++) {
+      const minY = predictionBoxes[i * 4] * 450
+      const minX = predictionBoxes[i * 4 + 1] * 600
+      const maxY = predictionBoxes[i * 4 + 2] * 450
+      const maxX = predictionBoxes[i * 4 + 3] * 600
+      const score = predictionScores[i * 3] * 100
+      const label = predictionClasses[i]
+
+      if (score > 75) {
+        ctx.beginPath()
+        ctx.rect(minX, minY, maxX - minX, maxY - minY)
+        ctx.lineWidth = 3
+        ctx.strokeStyle = 'red'
+        ctx.fillStyle = 'red'
+        ctx.stroke()
+        ctx.shadowColor = 'white'
+        ctx.shadowBlur = 10
+        ctx.font = '14px Arial bold'
+        ctx.fillText(
+          `${score.toFixed(1)} - ${label}`,
+          minX,
+          minY > 10 ? minY - 5 : 10
+        )
+      }
+    }
+  }
 }
