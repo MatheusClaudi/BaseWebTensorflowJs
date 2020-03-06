@@ -170,6 +170,9 @@ export class HomePage implements OnInit
     // get the context of canvas
     let canvas = <HTMLCanvasElement> document.getElementById("canvas")
 
+    canvas.height = this.resultHeight
+    canvas.width = this.resultWidth
+
     const ctx = canvas.getContext('2d')
     // clear the canvas
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
