@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import * as tf from '@tensorflow/tfjs'
 import { loadGraphModel } from '@tensorflow/tfjs-converter'
-const MODEL_URL = 'http://localhost:8081/web_model/model.json'
 
 
 @Component({
@@ -24,13 +23,24 @@ export class HomePage implements OnInit
   model: any =  null;
   videoRatio: any = 1;
   resultWidth: any =  0;
-  resultHeight: any =  0;  
+  resultHeight: any =  0;
+  
+  serverAcess: string = null;
+  MODEL_URL: string = "";
+
+  buttonPressed: boolean = false;
+
 
   ngOnInit()
   { 
+    this.MODEL_URL = 'https://192.168.43.147/web_model/model.json'
+  }
+
+  init() {
+    
+    this.buttonPressed = true;
     this.streamPromise = this.initWebcamStream()
     this.loadModelAndDetection()
-
   }
 
   initWebcamStream () {
@@ -109,7 +119,7 @@ export class HomePage implements OnInit
   loadCustomModel () {
     this.isModelReady = false
     // load the model with loadGraphModel
-    return loadGraphModel(MODEL_URL)
+    return loadGraphModel(this.MODEL_URL)
       .then((model) => {
         this.model = model
         this.isModelReady = true

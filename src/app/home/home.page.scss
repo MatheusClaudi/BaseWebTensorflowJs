@@ -1,8 +1,15 @@
 body {
   margin: 0;
 }
+
+.serverIdentificator{
+  text-align: center;
+}
+
 .resultFrame {
   display: grid;
+  text-align: center;
+
   video {
     grid-area: 1 / 1 / 2 / 2;
   }

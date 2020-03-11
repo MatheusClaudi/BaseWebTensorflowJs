@@ -2,9 +2,18 @@
 <ion-content [fullscreen]="true">
  
   <div id="app">
-   
-    <h3 *ngIf="!isVideoStreamReady && !initFailMessage">Initializing webcam stream ...</h3>
-    <h3 *ngIf="!isModelReady && !initFailMessage">loading model ...</h3>
+    
+    <div class="serverIdentificator" *ngIf="!buttonPressed">
+      <form (ngSubmit)="init()">
+        <ion-item>
+          <ion-input [(ngModel)]="MODEL_URL" [ngModelOptions]="{standalone: true}"></ion-input>
+        </ion-item>
+        <ion-button ion-button type="submit" block>Add Todo</ion-button>
+      </form>
+    </div>
+
+    <h3 *ngIf="!isVideoStreamReady && !initFailMessage && buttonPressed">Initializing webcam stream ...</h3>
+    <h3 *ngIf="!isModelReady && !initFailMessage && buttonPressed">loading model ...</h3>
     <h3 *ngIf="initFailMessage">Failed to init stream and/or model - {{ initFailMessage }}</h3>
 
     <div class="resultFrame">
