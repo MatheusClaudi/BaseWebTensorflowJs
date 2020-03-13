@@ -4,11 +4,11 @@
   <div id="app">
     
     <div class="serverIdentificator" *ngIf="!buttonPressed">
-      <form (ngSubmit)="init()">
+      <form (ngSubmit)="userPressedButton()">
         <ion-item>
           <ion-input [(ngModel)]="MODEL_URL" [ngModelOptions]="{standalone: true}"></ion-input>
         </ion-item>
-        <ion-button ion-button type="submit" block>Add Todo</ion-button>
+        <ion-button ion-button type="submit" block>Init detection</ion-button>
       </form>
     </div>
 
@@ -19,6 +19,12 @@
     <div class="resultFrame">
       <video id="vid" autoplay></video>
       <canvas id="canvas"></canvas>
+    </div>
+
+    <div *ngIf="numPredictions != 0">
+        <p>Atual: {{framePerSecondAtual}} /Ms</p>
+        <p>Min: {{framePerSecondMin}} /Ms</p>
+        <p>Max: {{framePerSecondMax}} /Ms</p>
     </div>
   </div>
   

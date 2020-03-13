@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+// Tensorflow imports
 import * as tf from '@tensorflow/tfjs'
 import { loadGraphModel } from '@tensorflow/tfjs-converter'
-
 
 @Component({
   selector: 'app-home',
@@ -10,37 +10,65 @@ import { loadGraphModel } from '@tensorflow/tfjs-converter'
 })
 export class HomePage implements OnInit 
 {
-  title = 'TF-ObjectDetection';
-  private video: HTMLVideoElement;
-  
+  // tag responsable to show video from webcam
+  private video: HTMLVideoElement;  
+  // promisses to load video and canvas tags
   streamPromise: any =  null;
   modelPromise: any =  null;
-  // control the UI visibilities
+  // execution identificators
   isVideoStreamReady: any =  false;
   isModelReady: any =  false;
   initFailMessage: any =  '';
-  // tfjs model related
+  buttonPressed: boolean = false;
+  // model loaded
   model: any =  null;
+  // video configurations
   videoRatio: any = 1;
   resultWidth: any =  0;
   resultHeight: any =  0;
-  
-  serverAcess: string = null;
+  // reference to server that contains the model
   MODEL_URL: string = "";
-
-  buttonPressed: boolean = false;
-
+  // peformance data
+  framePerSecondAtual: number = 0;
+  framePerSecondMax: number = 0;
+  framePerSecondMin: number = 0;
+  numPredictions: number = 0;
+  // labelmap
+  maping: Map<any, any> = new Map([
+    [ 1, "Mouse" ],
+    [ 2, "Keyboard" ]
+]);
 
   ngOnInit()
   { 
+    // when the page be open, use bellow reference to server as suggest 
     this.MODEL_URL = 'https://192.168.43.147/web_model/model.json'
   }
 
-  init() {
-    
+  // be activate when a user click a button, to send server address, and try init detection
+  userPressedButton() {
     this.buttonPressed = true;
     this.streamPromise = this.initWebcamStream()
     this.loadModelAndDetection()
+  }
+
+  // used to update report performance information
+  framePerSecondMakeReport(frame: number){
+
+    this.framePerSecondAtual = frame
+    
+    if (this.numPredictions == 0){
+
+      this.framePerSecondMin = frame
+      this.framePerSecondAtual = frame
+      this.numPredictions++
+    }
+    else{
+
+      if (this.framePerSecondMin > frame){this.framePerSecondMin = frame}
+      if (this.framePerSecondMax < frame && this.numPredictions > 2){this.framePerSecondMax = frame}
+      this.numPredictions++
+    }
   }
 
   initWebcamStream () {
@@ -148,10 +176,16 @@ export class HomePage implements OnInit
     const tf4d = tf.tensor4d(Array.from(resized.dataSync()), [1, 300, 300, 3]) // 600, 450
 
     console.log("c4")
+    var start = new Date().getTime()
 
     let predictions = await this.model.executeAsync({ image_tensor: tf4d }, ['detection_boxes', 'num_detections', 'detection_classes', 'detection_scores'])
+    
+    var end = new Date().getTime()
+    
+    this.framePerSecondMakeReport(end-start)
 
     console.log("c5")
+
 
     this.renderPredictionBoxes(predictions[0].dataSync(), predictions[1].dataSync(), predictions[2].dataSync(), predictions[3].dataSync())
     tfImg.dispose()
@@ -193,7 +227,7 @@ export class HomePage implements OnInit
       const maxY = predictionBoxes[i * 4 + 2] * 450
       const maxX = predictionBoxes[i * 4 + 3] * 600
       const score = predictionScores[i * 3] * 100
-      const label = predictionClasses[i]
+      const label = this.maping.get(predictionClasses[i])
 
       if (score > 75) {
         ctx.beginPath()
